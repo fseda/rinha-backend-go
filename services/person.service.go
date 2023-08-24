@@ -30,7 +30,7 @@ func (ps *PersonService) InsertPerson(name string, nickname string, birthdate st
 	return nil
 }
 
-func (ps *PersonService) GetPersonById(id string) (*models.Person, error) {
+func (ps *PersonService) GetPersonById(id string) (models.Person, error) {
 	var person models.Person
 
 	err := ps.db.QueryRow(`SELECT id, name, nickname, birthdate, stack FROM people WHERE id = ($1)`, id).Scan(
@@ -42,13 +42,13 @@ func (ps *PersonService) GetPersonById(id string) (*models.Person, error) {
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, models.ErrPersonNotFound
+			return models.Person{}, models.ErrPersonNotFound
 		} else {
-			return nil, err
+			return models.Person{}, err
 		}
 	}
 
-	return &person, nil
+	return person, nil
 }
 
 func (ps *PersonService) SearchBy(term string) ([]models.Person, error) {
