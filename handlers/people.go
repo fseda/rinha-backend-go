@@ -77,3 +77,18 @@ func HandleGetPersonById(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(person)
 }
+
+func HandleSearchPeople(c *fiber.Ctx) error {
+	var err error
+	var people []models.Person
+	term := c.Params("term")
+
+	ps := services.NewPersonService(database.Conn)
+
+	people, err = ps.SearchBy(term)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "Could not search")
+	}
+
+	return c.Status(fiber.StatusOK).JSON(people)
+}
