@@ -20,11 +20,6 @@ func NewPersonService(db *sql.DB) *PersonService {
 
 func (ps *PersonService) InsertPerson(name string, nickname string, birthdate string, stack []string) error {
 	id := uuid.New()
-
-	if ps.nicknameTaken(nickname) {
-		return models.ErrNicknameTaken
-	}
-
 	stackJSON := fmt.Sprintf("{%s}", pqArray(stack))
 
 	_, err := ps.db.Exec("INSERT INTO people (id, name, nickname, birthdate, stack) VALUES ($1, $2, $3, $4, %5)",
@@ -119,7 +114,7 @@ func (ps *PersonService) getPersonByNickname(nickname string) (string, error) {
 	return nicknameInDB, nil // Record exists
 }
 
-func (ps *PersonService) nicknameTaken(nickname string) bool {
+func (ps *PersonService) NicknameTaken(nickname string) bool {
 	nicknameInDB, err := ps.getPersonByNickname(nickname)
 	return nicknameInDB != "" && err == nil
 }
