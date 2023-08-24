@@ -3,8 +3,9 @@ package handlers
 import (
 	"errors"
 
-	"github.com/fseda/rinha-backend-go/services"
 	"github.com/fseda/rinha-backend-go/database"
+	"github.com/fseda/rinha-backend-go/models"
+	"github.com/fseda/rinha-backend-go/services"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -60,4 +61,19 @@ func HandleCreatePerson(c *fiber.Ctx) error {
 	}
 
 	return nil
+}
+
+func HandleGetPersonById(c *fiber.Ctx) error {
+	var err error
+	var person models.Person
+	id := c.Params("id")
+
+	ps := services.NewPersonService(database.Conn)
+
+	person, err = ps.GetPersonById(id)
+	if err != nil {
+		return fiber.NewError(fiber.StatusNotFound, "Person not found")
+	}
+
+	return c.Status(fiber.StatusOK).JSON(person)
 }
