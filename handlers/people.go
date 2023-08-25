@@ -71,11 +71,11 @@ func HandleGetPersonById(c *fiber.Ctx) error {
 
 	person, err = ps.GetPersonById(id)
 	if err != nil {
-		if err == models.ErrPersonNotFound {
-			return fiber.NewError(fiber.StatusNotFound, "Person not found")
-		} else {
+		if err != models.ErrPersonNotFound {
 			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 		}
+
+		return fiber.NewError(fiber.StatusNotFound, "Person not found")
 	}
 
 	return c.Status(fiber.StatusOK).JSON(person)
