@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/fseda/rinha-backend-go/database"
 	"github.com/fseda/rinha-backend-go/models"
@@ -20,12 +21,12 @@ type CreatePersonRequest struct {
 }
 
 func isString(variable interface{}) bool {
-    switch variable.(type) {
-    case string:
-        return true
-    default:
-        return false
-    }
+	switch variable.(type) {
+	case string:
+		return true
+	default:
+		return false
+	}
 }
 
 func HandleCreatePerson(c *fiber.Ctx) error {
@@ -34,7 +35,7 @@ func HandleCreatePerson(c *fiber.Ctx) error {
 	if err = c.BodyParser(&body); err != nil {
 		return err
 	}
-	
+
 	ps := services.NewPersonService(database.Conn)
 
 	if !isString(body.Name) || !isString(body.Nickname) {
@@ -67,12 +68,15 @@ func HandleGetPersonById(c *fiber.Ctx) error {
 	var err error
 	var person models.Person
 	id := c.Params("id")
-
 	ps := services.NewPersonService(database.Conn)
 
 	person, err = ps.GetPersonById(id)
 	if err != nil {
-		return fiber.NewError(fiber.StatusNotFound, "Person not found")
+		if err == models.ErrPersonNotFound {
+			return fiber.NewError(fiber.StatusNotFound, "Person not found")
+		} else {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
 	}
 
 	return c.Status(fiber.StatusOK).JSON(person)
@@ -81,7 +85,7 @@ func HandleGetPersonById(c *fiber.Ctx) error {
 func HandleSearchPeople(c *fiber.Ctx) error {
 	var err error
 	var people []models.Person
-	term := c.Params("term")
+	term := c.Params("t")
 
 	ps := services.NewPersonService(database.Conn)
 
