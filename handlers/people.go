@@ -92,3 +92,14 @@ func HandleSearchPeople(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON(people)
 }
+
+func HandleCountPeople(c *fiber.Ctx) error {
+	ps := services.NewPersonService(database.Conn)
+
+	count, err := ps.CountPeople()
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "Could not count people")
+	}
+
+	return c.Status(fiber.StatusOK).JSON(count)
+}
