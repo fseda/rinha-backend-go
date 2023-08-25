@@ -2,6 +2,7 @@ package services
 
 import (
 	"database/sql"
+	"fmt"
 	"strings"
 	"time"
 
@@ -21,14 +22,14 @@ func NewPersonService(db *sql.DB) *PersonService {
 	return &PersonService{db}
 }
 
-func (ps *PersonService) InsertPerson(name string, nickname string, birthdate string, stack pq.StringArray) error {
+func (ps *PersonService) InsertPerson(name string, nickname string, birthdate string, stack pq.StringArray) (uuid.UUID, error) {
 	id := uuid.New()
 	_, err := ps.db.Exec("INSERT INTO people (id, name, nickname, birthdate, stack) VALUES ($1, $2, $3, $4, $5)",
 		id, name, nickname, birthdate, stack)
 	if err != nil {
-		return err
+		return id, err
 	}
-	return nil
+	return id, nil
 }
 
 func (ps *PersonService) GetPersonById(id string) (models.Person, error) {
@@ -56,10 +57,10 @@ func (ps *PersonService) SearchBy(term string) ([]models.Person, error) {
 
 	cleanTerm := strings.ToLower(term)
 	query := `
-		SELECT * 
+		SELECT id, nickname, name, birthdate, stack 
 		FROM people 
-		WHERE name ILIKE '%' || $1 || '%' 
-		OR nickname ILIKE '%' || $1 || '%' 
+		WHERE nickname ILIKE '%' || $1 || '%' 
+		OR name ILIKE '%' || $1 || '%' 
 		OR EXISTS (SELECT 1 FROM unnest(stack) AS s WHERE s ILIKE '%' || $1 || '%')
 		LIMIT 50
 	`
@@ -74,8 +75,8 @@ func (ps *PersonService) SearchBy(term string) ([]models.Person, error) {
 		var person models.Person
 		err := rows.Scan(
 			&person.ID,
-			&person.Name,
 			&person.Nickname,
+			&person.Name,
 			&person.Birthdate,
 			&person.Stack,
 		)
@@ -126,27 +127,26 @@ func (ps *PersonService) ValidateBody(body dto.CreatePersonRequest) error {
 	}
 
 	if !isString(body.Name) || !isString(body.Nickname) {
-		return fiber.ErrBadRequest
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid name or nickname. Expected: string")
 	}
 
-	date_layout := "2000-01-01"
-	_, err = time.Parse(date_layout, body.Birthdate)
-	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, "Invalid birthdate", err.Error())
+	dateLayout := "2006-01-02"
+	if _, err = time.Parse(dateLayout, body.Birthdate); err != nil {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, fmt.Sprintf("Invalid date format. Expected: YYYY-MM-DD"), err.Error())
 	}
 
 	for _, tech := range body.Stack {
 		if !isString(tech) {
-			return fiber.ErrBadRequest
+			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Invalid stack. Expected: array of strings"))
 		}
 
 		if len(tech) > 32 {
-			return fiber.ErrBadRequest
+			return fiber.NewError(fiber.StatusUnprocessableEntity, fmt.Sprintf("Invalid stack. Expected: array of strings with max length of 32"))
 		}
 	}
+
 	return nil
 }
-
 
 func isString(variable interface{}) bool {
 	switch variable.(type) {
