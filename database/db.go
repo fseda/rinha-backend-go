@@ -42,7 +42,7 @@ func createPeopleTable() {
 		id UUID PRIMARY KEY,
 		nickname VARCHAR(32) NOT NULL,
 		name VARCHAR(100) NOT NULL,
-		birthdate DATE NOT NULL,
+		birthdate CHAR(10) NOT NULL,
 		stack VARCHAR(32)[]
 	);`)
 }
