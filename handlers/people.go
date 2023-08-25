@@ -57,7 +57,7 @@ func HandleCreatePerson(c *fiber.Ctx) error {
 
 	err = ps.InsertPerson(body.Name, body.Nickname, body.Birthdate, body.Stack)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "Unable to insert person")
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
 	return nil
@@ -84,13 +84,17 @@ func HandleGetPersonById(c *fiber.Ctx) error {
 func HandleSearchPeople(c *fiber.Ctx) error {
 	var err error
 	var people []models.Person
-	term := c.Params("t")
+	term := c.Queries()["t"]
 
 	ps := services.NewPersonService(database.Conn)
 
 	people, err = ps.SearchBy(term)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "Could not search")
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+	}
+	
+	if len(people) == 0 {
+		return c.Status(fiber.StatusOK).JSON([]interface{}{})
 	}
 
 	return c.Status(fiber.StatusOK).JSON(people)
