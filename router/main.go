@@ -7,7 +7,7 @@ import (
 
 func SetupRoutes(app *fiber.App) {
 	app.Post("/pessoas", handlers.HandleCreatePerson)
-	app.Get("/pessoas", handlers.HandleGetPersonById)
+	app.Get("/pessoas", handlers.HandleSearchPeople)
 	app.Get("/pessoas/:id", handlers.HandleGetPersonById)
 	app.Get("contagem-pessoas", handlers.HandleCountPeople)
 }
