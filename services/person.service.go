@@ -2,10 +2,12 @@ package services
 
 import (
 	"database/sql"
-	"fmt"
 	"strings"
+	"time"
 
 	"github.com/fseda/rinha-backend-go/models"
+	dto "github.com/fseda/rinha-backend-go/models/dto"
+	"github.com/gofiber/fiber/v2"
 	"github.com/lib/pq"
 
 	"github.com/google/uuid"
@@ -116,17 +118,41 @@ func (ps *PersonService) NicknameTaken(nickname string) bool {
 	return nicknameInDB != "" && err == nil
 }
 
-// pqArray formats a slice of strings as a PostgreSQL array literal
-func pqArray(arr []string) string {
-	return fmt.Sprintf(`"%s"`, pqArrayString(arr))
+func (ps *PersonService) ValidateBody(body dto.CreatePersonRequest) error {
+	var err error
+
+	if ps.NicknameTaken(body.Nickname) {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, "Nickname already taken")
+	}
+
+	if !isString(body.Name) || !isString(body.Nickname) {
+		return fiber.ErrBadRequest
+	}
+
+	date_layout := "2000-01-01"
+	_, err = time.Parse(date_layout, body.Birthdate)
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "Invalid birthdate", err.Error())
+	}
+
+	for _, tech := range body.Stack {
+		if !isString(tech) {
+			return fiber.ErrBadRequest
+		}
+
+		if len(tech) > 32 {
+			return fiber.ErrBadRequest
+		}
+	}
+	return nil
 }
 
-// pqArrayString formats a slice of strings as a comma-separated string
-func pqArrayString(arr []string) string {
-	return "{" + pqArrayJoin(arr, ",") + "}"
-}
 
-// pqArrayJoin joins a slice of strings using a separator
-func pqArrayJoin(arr []string, sep string) string {
-	return "'" + strings.Join(arr, sep) + "'"
+func isString(variable interface{}) bool {
+	switch variable.(type) {
+	case string:
+		return true
+	default:
+		return false
+	}
 }
