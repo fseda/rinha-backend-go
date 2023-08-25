@@ -22,7 +22,7 @@ func (ps *PersonService) InsertPerson(name string, nickname string, birthdate st
 	id := uuid.New()
 	stackJSON := fmt.Sprintf("{%s}", pqArray(stack))
 
-	_, err := ps.db.Exec("INSERT INTO people (id, name, nickname, birthdate, stack) VALUES ($1, $2, $3, $4, %5)",
+	_, err := ps.db.Exec("INSERT INTO people (id, name, nickname, birthdate, stack) VALUES ($1, $2, $3, $4, $5)",
 		id, name, nickname, birthdate, stackJSON)
 	if err != nil {
 		return err
@@ -47,7 +47,6 @@ func (ps *PersonService) GetPersonById(id string) (models.Person, error) {
 			return models.Person{}, err
 		}
 	}
-
 	return person, nil
 }
 
@@ -56,13 +55,20 @@ func (ps *PersonService) SearchBy(term string) ([]models.Person, error) {
 
 	cleanTerm := strings.ToLower(term)
 
+	// query := `
+	// 	SELECT * 
+	// 	FROM people 
+	// 	WHERE nome ILIKE '%' || $1 || '%' 
+	// 	OR apelido ILIKE '%' || $1 || '%' 
+	// 	OR EXISTS (SELECT 1 FROM unnest(stack) AS s WHERE s ILIKE '%' || $1 || '%')
+	// 	LIMIT 50
+	// `
+
 	query := `
-		SELECT * 
-		FROM people 
-		WHERE nome ILIKE '%' || $1 || '%' 
-		OR apelido ILIKE '%' || $1 || '%' 
-		OR EXISTS (SELECT 1 FROM unnest(stack) AS s WHERE s ILIKE '%' || $1 || '%')
-		LIMIT 50
+		SELECT id, nickname, name, birthdate, stack 
+		FROM people p
+		WHERE p.search LIKE '%' || $1 || '%'
+		LIMIT 50;
 	`
 
 	rows, err := ps.db.Query(query, cleanTerm)
