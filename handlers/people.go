@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/fseda/rinha-backend-go/database"
 	"github.com/fseda/rinha-backend-go/models"
