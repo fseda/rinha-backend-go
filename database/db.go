@@ -40,9 +40,9 @@ func initializeTables() {
 func createPeopleTable() {
 	Conn.Exec(`CREATE TABLE IF NOT EXISTS people (
 		id UUID PRIMARY KEY,
-		nickname CHAR(32) NOT NULL,
-		name CHAR(100) NOT NULL,
+		nickname VARCHAR(32) NOT NULL,
+		name VARCHAR(100) NOT NULL,
 		birthdate DATE NOT NULL,
-		stack CHAR(32)[]
+		stack VARCHAR(32)[]
 	);`)
 }
