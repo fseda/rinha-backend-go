@@ -27,12 +27,14 @@ func HandleCreatePerson(c *fiber.Ctx) error {
 		return err
 	}
 
-	err = ps.InsertPerson(body.Name, body.Nickname, body.Birthdate, body.Stack)
+	id, err := ps.InsertPerson(body.Name, body.Nickname, body.Birthdate, body.Stack)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "Could not create person", err.Error())
 	}
 
-	return nil
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"id": id,
+	})
 }
 
 func HandleGetPersonById(c *fiber.Ctx) error {
